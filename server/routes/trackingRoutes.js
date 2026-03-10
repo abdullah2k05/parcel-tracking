@@ -1,19 +1,15 @@
-const router = require('express').Router();
-const Parcel = require('../models/Parcel');
-const User = require('../models/User');
+const express = require('express');
+const authMiddleware = require('../middleware/authMiddleware');
+const {
+  trackShipment,
+  getTrackingHistory,
+  getSavedParcels
+} = require('../controllers/trackingController');
 
-// Route to track a parcel by ID
-router.get('/track', async (req, res) => {
-  try {
-    const trackingId = req.body.trackingId;
-    const parcel = await Parcel.findById(trackingId);   
-    if (!parcel) {
-      return res.status(404).json({ message: 'Parcel not found' });
-    }
-    res.json(parcel);
-  } catch (err) {
-    res.status(500).json({ message: 'Server error' });
-  }
-});
+const router = express.Router();
 
-module.exports = router;        
+router.post('/', authMiddleware, trackShipment);
+router.get('/history', authMiddleware, getTrackingHistory);
+router.get('/saved', authMiddleware, getSavedParcels);
+
+module.exports = router;

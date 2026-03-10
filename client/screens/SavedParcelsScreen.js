@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, StyleSheet, ActivityIndicator } from 'react-native';
-import { fetchTrackingHistory } from '../services/api';
+import { View, Text, StyleSheet, FlatList, ActivityIndicator } from 'react-native';
+import { fetchSavedParcels } from '../services/api';
 import { formatDate } from '../utils/helpers';
 
-export default function HistoryScreen() {
+export default function SavedParcelsScreen() {
   const [loading, setLoading] = useState(true);
   const [items, setItems] = useState([]);
   const [error, setError] = useState('');
@@ -11,15 +11,15 @@ export default function HistoryScreen() {
   useEffect(() => {
     let mounted = true;
 
-    async function loadHistory() {
+    async function loadSaved() {
       try {
-        const data = await fetchTrackingHistory();
+        const data = await fetchSavedParcels();
         if (mounted) {
           setItems(data.items || []);
         }
       } catch (apiError) {
         if (mounted) {
-          setError(apiError.message || 'Failed to load tracking history.');
+          setError(apiError.message || 'Failed to load saved parcels.');
         }
       } finally {
         if (mounted) {
@@ -28,7 +28,7 @@ export default function HistoryScreen() {
       }
     }
 
-    loadHistory();
+    loadSaved();
     return () => {
       mounted = false;
     };
@@ -54,14 +54,14 @@ export default function HistoryScreen() {
     <FlatList
       data={items}
       keyExtractor={(item) => item.trackingId}
-      contentContainerStyle={styles.container}
-      ListEmptyComponent={<Text style={styles.empty}>No tracking history found.</Text>}
+      contentContainerStyle={styles.listContainer}
+      ListEmptyComponent={<Text style={styles.empty}>No saved parcels yet.</Text>}
       renderItem={({ item }) => (
-        <View style={styles.card}>
+        <View style={styles.item}>
           <Text style={styles.title}>{item.courier} - {item.trackingId}</Text>
           <Text style={styles.meta}>Status: {item.status}</Text>
-          <Text style={styles.meta}>Last Update: {formatDate(item.updatedAt)}</Text>
-          <Text style={styles.meta}>Expected Delivery: {formatDate(item.expectedDelivery)}</Text>
+          <Text style={styles.meta}>Location: {item.location || 'N/A'}</Text>
+          <Text style={styles.meta}>Updated: {formatDate(item.updatedAt)}</Text>
         </View>
       )}
     />
@@ -69,15 +69,15 @@ export default function HistoryScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    padding: 16,
+  listContainer: {
+    padding: 14,
     backgroundColor: '#F3F6FA',
     flexGrow: 1
   },
-  card: {
+  item: {
     backgroundColor: '#FFFFFF',
     borderRadius: 12,
-    padding: 14,
+    padding: 12,
     marginBottom: 10
   },
   title: {
@@ -85,13 +85,13 @@ const styles = StyleSheet.create({
     color: '#0D1B2A'
   },
   meta: {
-    marginTop: 4,
-    color: '#475569'
+    color: '#475569',
+    marginTop: 4
   },
   empty: {
     textAlign: 'center',
-    marginTop: 40,
-    color: '#64748B'
+    color: '#64748B',
+    marginTop: 50
   },
   centered: {
     flex: 1,

@@ -1,14 +1,28 @@
 const mongoose = require('mongoose');
-const bcrypt = require('bcrypt');
 
-const parcelSchema = new mongoose.Schema({
-  sender: { type: String, required: true },
-  recipient: { type: String, required: true },
-  weight: { type: Number, required: true },
-  status: { type: String, enum: ['pending', 'shipped', 'delivered'], default: 'pending' },
-  createdAt: { type: Date, default: Date.now }
-});
+const trackingHistorySchema = new mongoose.Schema(
+  {
+    status: { type: String, required: true },
+    location: { type: String, default: '' },
+    timestamp: { type: Date, required: true },
+    note: { type: String, default: '' }
+  },
+  { _id: false }
+);
 
-const Parcel = mongoose.model('Parcel', parcelSchema);
+const parcelSchema = new mongoose.Schema(
+  {
+    trackingId: { type: String, required: true, unique: true, index: true },
+    courier: { type: String, required: true, index: true },
+    status: { type: String, required: true },
+    location: { type: String, default: '' },
+    expectedDelivery: { type: Date, default: null },
+    history: { type: [trackingHistorySchema], default: [] },
+    savedByUsers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+    lastSyncedAt: { type: Date, default: Date.now },
+    rawPayload: { type: mongoose.Schema.Types.Mixed, default: null }
+  },
+  { timestamps: true }
+);
 
-module.exports = Parcel;        
+module.exports = mongoose.model('Parcel', parcelSchema);

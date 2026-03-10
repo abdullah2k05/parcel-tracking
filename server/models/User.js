@@ -1,31 +1,26 @@
 const mongoose = require('mongoose');
-const bcrypt = require('bcrypt');
+const crypto = require('crypto');
 
-const userSchema = new mongoose.Schema({
-  username: { type: String, required: true, unique: true },
-  password: { type: String, required: true },
-  email: { type: String, required: true, unique: true },
-  createdAt: { type: Date, default: Date.now }
-});
+const userSchema = new mongoose.Schema(
+  {
+    name: { type: String, required: true, trim: true },
+    email: { type: String, required: true, unique: true, lowercase: true, trim: true },
+    passwordHash: { type: String, required: true },
+    notificationPreferences: {
+      pushEnabled: { type: Boolean, default: false },
+      statusChanges: { type: Boolean, default: true }
+    }
+  },
+  { timestamps: true }
+);
 
-// Hash the password before saving the user
-userSchema.pre('save', async function (next) {
-  if (!this.isModified('password')) return next();
-    
-    try {
-    const salt = await bcrypt.genSalt(10);
-    this.password = await bcrypt.hash(this.password, salt);
-    next();
-  } catch (err) {
-    next(err);
-  }
-});
-
-// Method to compare password for login
-userSchema.methods.comparePassword = async function (candidatePassword) {
-  return await bcrypt.compare(candidatePassword, this.password);
+userSchema.methods.setPassword = function setPassword(password) {
+  this.passwordHash = crypto.createHash('sha256').update(password).digest('hex');
 };
 
-const User = mongoose.model('User', userSchema);
+userSchema.methods.comparePassword = function comparePassword(password) {
+  const hash = crypto.createHash('sha256').update(password).digest('hex');
+  return hash === this.passwordHash;
+};
 
-module.exports = User;      
+module.exports = mongoose.model('User', userSchema);
